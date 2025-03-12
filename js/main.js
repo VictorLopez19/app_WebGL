@@ -1,11 +1,9 @@
-
-// Selecciona el elemento canvas del DOM y obtiene su contexto 2D para dibujar.
 const canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 
 // Obtiene las dimensiones actuales de la ventana del navegador.
-const window_height = /* 300; */window.innerHeight * 0.65;
-const window_width = /* 300; */window.innerWidth <= 500? window.innerWidth * .9 : window.innerWidth * 0.65;
+const window_height = window.innerHeight * 0.65;
+const window_width = window.innerWidth <= 500 ? window.innerWidth * 0.9 : window.innerWidth * 0.65;
 
 // Ajusta el tamaño del canvas para que coincida con la pantalla
 canvas.height = window_height;
@@ -17,54 +15,33 @@ let x = (canvas.width - lado) / 2; // Centrado en X
 let y = canvas.height - lado; // Pegado abajo en Y
 const velocidad = 10; // Cantidad de píxeles que se moverá en cada pulsación
 
-let enSalto = false; // Variable para evitar múltiples saltos
+let enSuelo = false; // Variable para verificar si el cuadrado está en el suelo
 const alturaSalto = 50; // Altura del salto en píxeles
-const tiempoSalto = 100; // Duración del salto en milisegundos
+const tiempoSalto = 1000; // Duración del salto en milisegundos
+let velocidadY = 0; // Velocidad vertical del cuadrado
+const gravedad = 0.8; // Gravedad que afecta el salto
+const salto = -15; // Fuerza del salto
 
 let balas = []; // Array para almacenar las balas
 const velocidadBala = 3; // Velocidad de la bala
 const radioBala = 4; // Tamaño de la bala
 
-function dibujarCuadrado() {
-  // Limpiar el canvas antes de redibujar
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+let plataformas = []; // Array para almacenar plataformas
 
-  // Dibujar el cuadrado
-  ctx.fillStyle = "blue";
-  ctx.fillRect(x, y, lado, lado);
+// Crear plataformas
+function crearPlataformas() {
+  plataformas.push({ x: 100, y: canvas.height - 50, ancho: 100, alto: 10 });
+  plataformas.push({ x: 250, y: canvas.height - 100, ancho: 100, alto: 10 });
+  plataformas.push({ x: 400, y: canvas.height - 150, ancho: 100, alto: 10 });
+  plataformas.push({ x: 600, y: canvas.height - 200, ancho: 100, alto: 10 });
 }
 
-document.addEventListener("keydown", function (event) {
-  const tecla = event.key.toLowerCase();
-
-  if (tecla === "a") {
-    x -= velocidad;
-    if (x + lado <= 0) x = canvas.width;
-  } else if (tecla === "d") {
-    x += velocidad;
-    if (x >= canvas.width) x = -lado;
-  } else if (tecla === "w" && !enSalto) {
-    enSalto = true;
-    let yOriginal = y;
-    y -= alturaSalto; // Subir
-    dibujarCuadrado();
-
-    setTimeout(() => {
-      y = yOriginal; // Bajar
-      dibujarCuadrado();
-      enSalto = false;
-    }, tiempoSalto);
-  }
-
-  dibujarCuadrado();
-});
-
+// Crear una nueva bala desde la posición del cuadrado
 canvas.addEventListener("click", function (event) {
   const rect = canvas.getBoundingClientRect();
   const mouseX = event.clientX - rect.left;
   const mouseY = event.clientY - rect.top;
 
-  // Crear una nueva bala desde la posición del cuadrado
   const bala = {
     x: x + lado / 2, // Centro del cuadrado
     y: y,
@@ -76,7 +53,16 @@ canvas.addEventListener("click", function (event) {
   balas.push(bala);
 });
 
+// Dibujar plataformas en el canvas
+function dibujarPlataformas() {
+  ctx.fillStyle = "green";
+  for (let i = 0; i < plataformas.length; i++) {
+    const plataforma = plataformas[i];
+    ctx.fillRect(plataforma.x, plataforma.y, plataforma.ancho, plataforma.alto);
+  }
+}
 
+// Dibujar balas en el canvas
 function dibujarBalas() {
   for (let i = 0; i < balas.length; i++) {
     let bala = balas[i];
@@ -96,18 +82,76 @@ function dibujarBalas() {
   balas = balas.filter(bala => bala.x > 0 && bala.x < canvas.width && bala.y > 0 && bala.y < canvas.height);
 }
 
-// Modificar la función de dibujo para incluir las balas
+// Función para detectar si el cuadrado toca una plataforma
+function colisionConPlataformas() {
+  enSuelo = false; // Resetear si está tocando el suelo en cada frame
+
+  for (let i = 0; i < plataformas.length; i++) {
+    const plataforma = plataformas[i];
+
+    // Verifica si el cuadrado está tocando una plataforma
+    if (
+      x + lado > plataforma.x &&
+      x < plataforma.x + plataforma.ancho &&
+      y + lado + velocidadY >= plataforma.y &&
+      y + lado <= plataforma.y + plataforma.alto
+    ) {
+      // Ajusta la posición del cuadrado sobre la plataforma
+      y = plataforma.y - lado;  // Coloca el cuadrado sobre la plataforma
+      velocidadY = 0;  // Detener el movimiento vertical
+      enSuelo = true;  // El cuadrado está en el suelo o sobre una plataforma
+      return true; // Se ha tocado una plataforma
+    }
+  }
+  return false; // No tocó ninguna plataforma
+}
+
+// Ajuste en la función de dibujar y actualizar
 function dibujarCuadrado() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);  // Limpiar el canvas
   ctx.fillStyle = "blue";
-  ctx.fillRect(x, y, lado, lado);
-  dibujarBalas();
+
+  // Detectar colisiones con plataformas
+  if (!colisionConPlataformas()) {
+    // Si no está tocando ninguna plataforma, aplicar gravedad
+    if (y + lado < canvas.height) {  // Evitar que se siga cayendo si ya está en el suelo
+      velocidadY += gravedad;  // Aplicar gravedad
+    }
+  }
+  
+  y += velocidadY;
+
+  ctx.fillRect(x, y, lado, lado);  // Dibujar el cuadrado
+
+  // Console logs for debugging
+  console.log("En Suelo:", enSuelo);
+  console.log("Velocidad Y:", velocidadY);
+  console.log("Posición Y:", y);
+
+  dibujarPlataformas();  // Dibujar las plataformas
+  plataformas.push({ x: 0, y: canvas.height - 10, ancho: canvas.width, alto: 10 });
+  dibujarBalas();  // Dibujar las balas
 }
 
-// Actualizar el canvas constantemente
+// Mover el cuadrado con las teclas
+document.addEventListener("keydown", function (event) {
+  if (event.key === "a") {
+    x -= 10;  // Mover a la izquierda
+  }
+  if (event.key === "d") {
+    x += 10;  // Mover a la derecha
+  }
+  if (event.key === "w") {
+    velocidadY = salto;  // Saltar si está en el suelo o sobre una plataforma
+  }
+});
+
+// Actualizar la animación
 function actualizar() {
-  dibujarCuadrado();
-  requestAnimationFrame(actualizar);
+  dibujarCuadrado();  // Dibujar el cuadrado y aplicar la gravedad y saltos
+  requestAnimationFrame(actualizar);  // Continuar actualizando
 }
 
-actualizar();
+// Crear plataformas al inicio
+crearPlataformas();
+actualizar();  // Iniciar el ciclo de actualización
