@@ -119,7 +119,12 @@ function dibujarCuadrado() {
     }
   }
   
+  // Actualiza la posición Y y asegura que no se mueva más allá del borde superior
   y += velocidadY;
+  if (y < 0) { // Limita el salto para que no sobrepase el borde superior
+    y = 0;
+    velocidadY = 0; // Detener el salto al llegar al límite superior
+  }
 
   ctx.fillRect(x, y, lado, lado);  // Dibujar el cuadrado
 
