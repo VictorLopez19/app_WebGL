@@ -15,12 +15,14 @@ let x = (canvas.width - lado) / 2; // Centrado en X
 let y = canvas.height - lado; // Pegado abajo en Y
 const velocidad = 10; // Cantidad de píxeles que se moverá en cada pulsación
 
+let enSalto = false; // Variable para evitar múltiples saltos
 let enSuelo = false; // Variable para verificar si el cuadrado está en el suelo
 const alturaSalto = 50; // Altura del salto en píxeles
 const tiempoSalto = 1000; // Duración del salto en milisegundos
 let velocidadY = 0; // Velocidad vertical del cuadrado
 const gravedad = 0.8; // Gravedad que afecta el salto
 const salto = -15; // Fuerza del salto
+let volando = false;  // Variable para rastrear si el cuadrado está volando
 
 let balas = []; // Array para almacenar las balas
 const velocidadBala = 3; // Velocidad de la bala
@@ -121,38 +123,57 @@ function dibujarCuadrado() {
   
   // Actualiza la posición Y y asegura que no se mueva más allá del borde superior
   y += velocidadY;
-  if (y < 0) { // Limita el salto para que no sobrepase el borde superior
-    y = 0;
+  if (y < 40) { // Limita el salto para que no sobrepase el borde superior
+    y = 40;
     velocidadY = 0; // Detener el salto al llegar al límite superior
   }
 
   ctx.fillRect(x, y, lado, lado);  // Dibujar el cuadrado
 
-  // Console logs for debugging
-  console.log("En Suelo:", enSuelo);
-  console.log("Velocidad Y:", velocidadY);
-  console.log("Posición Y:", y);
-
   dibujarPlataformas();  // Dibujar las plataformas
-  plataformas.push({ x: 0, y: canvas.height - 10, ancho: canvas.width, alto: 10 });
+  plataformas.push({ x: -5, y: canvas.height - 10, ancho: canvas.width + 10, alto: 10 });
   dibujarBalas();  // Dibujar las balas
 }
 
-// Mover el cuadrado con las teclas
 document.addEventListener("keydown", function (event) {
-  if (event.key === "a") {
-    x -= 10;  // Mover a la izquierda
+  const tecla = event.key.toLowerCase();
+
+  // Movimiento a la izquierda (a)
+  if (tecla === "a") {
+    x -= velocidad;  // Mueve el cuadrado a la izquierda
+    if (x + lado <= 0) x = canvas.width;  // Si pasa el borde izquierdo, aparece en el derecho
   }
-  if (event.key === "d") {
-    x += 10;  // Mover a la derecha
+  // Movimiento a la derecha (d)
+  else if (tecla === "d") {
+    x += velocidad;  // Mueve el cuadrado a la derecha
+    if (x >= canvas.width) x = -lado;  // Si pasa el borde derecho, aparece en el izquierdo
   }
-  if (event.key === "w") {
-    velocidadY = salto;  // Saltar si está en el suelo o sobre una plataforma
+  // Salto (w)
+  if (event.key === "w" && enSuelo) {  // Solo salta si está en el suelo o sobre una plataforma
+    velocidadY = salto;  // Aplica la velocidad del salto
+  }
+
+  // Vuelo (s) - Mientras se mantenga presionada la tecla 's', el cuadrado sube
+  if (event.key === "s") {
+    volando = true;  // El cuadrado empieza a volar
+  }
+
+  dibujarCuadrado();
+});
+
+document.addEventListener("keyup", function (event) {
+  if (event.key === "s") {
+    volando = false;  // El cuadrado deja de volar cuando se suelta la tecla
   }
 });
 
 // Actualizar la animación
 function actualizar() {
+  // Si está volando, se mueve hacia arriba
+  if (volando) {
+    velocidadY = -5;  // Mantiene al cuadrado subiendo (simula vuelo)
+  }
+
   dibujarCuadrado();  // Dibujar el cuadrado y aplicar la gravedad y saltos
   requestAnimationFrame(actualizar);  // Continuar actualizando
 }
