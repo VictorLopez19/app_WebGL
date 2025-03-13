@@ -35,7 +35,12 @@ let noEnemigos = 1;
 
 let plataformas = []; // Array para almacenar plataformas
 
-let vidas = 5;
+let vidas = 1;
+
+let intervalID;
+
+let game_over = new Image();
+game_over.src = './assets/img/game_over.png';
 
 // Crear plataformas
 function crearPlataformas() {
@@ -139,32 +144,43 @@ function colisionConPlataformas() {
   return false; // No tocó ninguna plataforma
 }
 
-// Ajuste en la función de dibujar y actualizar
-function dibujarCuadrado() {
-  ctx.fillStyle = "blue";
+class cuadrado {
+  constructor(color) {
+    this.color = color;
+  }
 
-  // Detectar colisiones con plataformas
-  if (!colisionConPlataformas()) {
-    // Si no está tocando ninguna plataforma, aplicar gravedad
-    if (y + lado < canvas.height) {  // Evitar que se siga cayendo si ya está en el suelo
-      velocidadY += gravedad;  // Aplicar gravedad
+  // Ajuste en la función de dibujar y actualizar
+  drawSquare() {
+    ctx.fillStyle = this.color;
+
+    // Detectar colisiones con plataformas
+    if (!colisionConPlataformas()) {
+      // Si no está tocando ninguna plataforma, aplicar gravedad
+      if (y + lado < canvas.height) {  // Evitar que se siga cayendo si ya está en el suelo
+        velocidadY += gravedad;  // Aplicar gravedad
+      }
     }
-  }
-  
-  // Actualiza la posición Y y asegura que no se mueva más allá del borde superior
-  y += velocidadY;
-  if (y < 40) { // Limita el salto para que no sobrepase el borde superior
-    y = 40;
-    velocidadY = 0; // Detener el salto al llegar al límite superior
+
+    // Actualiza la posición Y y asegura que no se mueva más allá del borde superior
+    y += velocidadY;
+    if (y < 40) { // Limita el salto para que no sobrepase el borde superior
+      y = 40;
+      velocidadY = 0; // Detener el salto al llegar al límite superior
+    }
+
+    ctx.fillRect(x, y, lado, lado);  // Dibujar el cuadrado
+
+    dibujarPlataformas();  // Dibujar las plataformas
+    plataformas.push({ x: -5, y: canvas.height - 10, ancho: canvas.width + 10, alto: 10 });
+    dibujarBalas();  // Dibujar las balas
+    comprobarColisiones();  // Verificar si las balas tocan los círculos
   }
 
-  ctx.fillRect(x, y, lado, lado);  // Dibujar el cuadrado
-
-  dibujarPlataformas();  // Dibujar las plataformas
-  plataformas.push({ x: -5, y: canvas.height - 10, ancho: canvas.width + 10, alto: 10 });
-  dibujarBalas();  // Dibujar las balas
-  comprobarColisiones();  // Verificar si las balas tocan los círculos
 }
+
+let player = new cuadrado("purple");
+
+
 
 document.addEventListener("keydown", function (event) {
   const tecla = event.key.toLowerCase();
@@ -189,7 +205,9 @@ document.addEventListener("keydown", function (event) {
     volando = true;  // El cuadrado empieza a volar
   }
 
-  dibujarCuadrado();
+  if (vidas > 0) {
+    player.drawSquare();
+  }
 });
 
 document.addEventListener("keyup", function (event) {
@@ -219,18 +237,18 @@ class Circle {
     context.stroke();
     context.closePath();
   }
-  
+
   update(context, squareX, squareY, squareSize, index) {
     this.draw(context);
-  
+
     // Calcular las coordenadas del centro del cuadrado
     let squareCenterX = squareX + squareSize / 2;
     let squareCenterY = squareY + squareSize / 2;
-  
+
     // Calcular la dirección hacia el centro del cuadrado
     let dxToSquare = squareCenterX - this.posX;
     let dyToSquare = squareCenterY - this.posY;
-  
+
     // Normalizar el vector de dirección
     let distance = Math.sqrt(dxToSquare * dxToSquare + dyToSquare * dyToSquare);
     if (distance > 0) {
@@ -238,24 +256,24 @@ class Circle {
       this.dx = (dxToSquare / distance) * this.speed;
       this.dy = (dyToSquare / distance) * this.speed;
     }
-  
+
     // Actualizar posición
     this.posX += this.dx;
     this.posY += this.dy;
-  
+
     // Comprobar si el círculo ha llegado al cuadrado (colisión)
     if (
-      this.posX + this.radius > squareX && 
+      this.posX + this.radius > squareX &&
       this.posX - this.radius < squareX + squareSize &&
       this.posY + this.radius > squareY &&
       this.posY - this.radius < squareY + squareSize
     ) {
       // El círculo ha alcanzado el cuadrado, puedes agregar acciones aquí
       console.log(vidas)
-      vidas --;
+      vidas--;
       circulos.splice(index, 1);
     }
-  
+
     // Comprobar colisión con los bordes
     if (this.posX + this.radius > window_width || this.posX - this.radius < 0) {
       this.dx = -this.dx;
@@ -270,15 +288,15 @@ class Circle {
 
 
 function drawCircles() {
-  drawCircle ();
-  let intervalID = setInterval(function() {
-      for (i = 0; i < noEnemigos; i++) {
-        drawCircle ();
-      }
+  drawCircle();
+  intervalID = setInterval(function () {
+    for (i = 0; i < noEnemigos; i++) {
+      drawCircle();
+    }
   }, 2000);
 }
 
-function drawCircle (){
+function drawCircle() {
   // Elegir si el círculo aparecerá arriba o abajo
   let randomEdge = Math.random() < 0.5 ? 'top' : 'bottom';
 
@@ -305,11 +323,23 @@ function actualizar() {
 
   // Actualizar los círculos
   for (i = 0; i < circulos.length; i++) {
-    circulos[i].update (ctx, x, y, lado, i);
+    circulos[i].update(ctx, x, y, lado, i);
   }
 
-  dibujarCuadrado();  // Dibujar el cuadrado y aplicar la gravedad y saltos
-  requestAnimationFrame(actualizar);  // Continuar actualizando
+  if (vidas > 0) {
+    player.drawSquare();  // Dibujar el cuadrado y aplicar la gravedad y saltos
+    requestAnimationFrame(actualizar);  // Continuar actualizando
+  } else {
+    ctx.clearRect(0, 0, window_width, window_height); // Limpia el canvas antes de redibujar
+    clearInterval(intervalID);
+
+    ctx.drawImage(game_over,
+      (window_width / 2) - (window_width / 4) + 10, // Coordenada X centrada
+      (window_height / 2) - (window_height / 4) - 50, // Coordenada Y centrada
+      window_width / 2 - 20,
+      window_height / 2 + 100
+    );
+  }
 }
 
 // Crear plataformas al inicio
