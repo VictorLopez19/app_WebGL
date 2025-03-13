@@ -1,5 +1,8 @@
 const canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
+// Pre-dibujar las plataformas en un canvas de buffer
+const canvasAux = document.createElement('canvas');
+const ctxAux = canvasAux.getContext('2d');
 
 // Obtiene las dimensiones actuales de la ventana del navegador.
 const window_height = window.innerHeight * 0.65;
@@ -8,7 +11,13 @@ const window_width = window.innerWidth <= 500 ? window.innerWidth * 0.9 : window
 // Ajusta el tamaño del canvas para que coincida con la pantalla
 canvas.height = window_height;
 canvas.width = window_width;
+
+// Actualizar el tamaño del buffer canvas a lo necesario
+canvasAux.width = window_width
+canvasAux.height = window_height
+
 canvas.style.background = "rgb(224, 224, 224)";
+canvasAux.style.background = "rgb(224, 224, 224)";
 
 const lado = 30; // Tamaño del cuadrado
 let x = (canvas.width - lado) / 2; // Centrado en X
@@ -36,18 +45,56 @@ let noEnemigos = 1;
 let plataformas = []; // Array para almacenar plataformas
 
 let vidas = 1;
+let puntaje = 0;
 
 let intervalID;
 
 let game_over = new Image();
 game_over.src = './assets/img/game_over.png';
 
+let background = new Image();
+background.src = './assets/img/background.jpg';
+
+let plataform = new Image();
+plataform.src = './assets/img/plataform.png';
+
+// Cargar imágenes
+const p1 = new Image();
+const p2 = new Image();
+const p3 = new Image();
+p1.src = './assets/img/p1.png';
+p2.src = './assets/img/p2.png';
+p3.src = './assets/img/p3.png';
+
 // Crear plataformas
 function crearPlataformas() {
-  plataformas.push({ x: 60, y: canvas.height - 100, ancho: 250, alto: 10 });
-  plataformas.push({ x: 350, y: canvas.height - 150, ancho: 120, alto: 10 });
-  plataformas.push({ x: 500, y: canvas.height - 250, ancho: 200, alto: 10 });
-  plataformas.push({ x: 750, y: canvas.height - 300, ancho: 150, alto: 10 });
+  plataformas.push({ x: 60, y: canvas.height - 100, ancho: 252, alto: 18 });
+  plataformas.push({ x: 350, y: canvas.height - 150, ancho: 126, alto: 18 });
+  plataformas.push({ x: 500, y: canvas.height - 250, ancho: 198, alto: 18 });
+  plataformas.push({ x: 750, y: canvas.height - 300, ancho: 144, alto: 18 });
+  plataformas.push({ x: -5, y: canvas.height - 10, ancho: canvas.width + 10, alto: 10 });
+}
+
+function dibujarPlataformas() {
+  for (let i = 0; i < plataformas.length; i++) {
+    const plataforma = plataformas[i];
+    let anchoTotal = 0; // Reiniciar el anchoTotal para cada plataforma
+
+    console.log("Entro")
+
+    // Dibuja la imagen de la orilla izquierda (p1)
+    ctxAux.drawImage(p1, plataforma.x + anchoTotal, plataforma.y, p1.width, p1.height);
+    anchoTotal += p1.width;
+
+    // Dibuja las imágenes del centro (p2) hasta completar el ancho de la plataforma
+    while (anchoTotal + p3.width < plataforma.ancho) {
+      ctxAux.drawImage(p2, plataforma.x + anchoTotal, plataforma.y, p2.width, p2.height);
+      anchoTotal += p2.width;
+    }
+
+    // Dibuja la imagen de la orilla derecha (p3)
+    ctxAux.drawImage(p3, plataforma.x + anchoTotal, plataforma.y, p3.width, p3.height);
+  }
 }
 
 // Crear una nueva bala desde la posición del cuadrado
@@ -67,14 +114,7 @@ canvas.addEventListener("click", function (event) {
   balas.push(bala);
 });
 
-// Dibujar plataformas en el canvas
-function dibujarPlataformas() {
-  ctx.fillStyle = "green";
-  for (let i = 0; i < plataformas.length; i++) {
-    const plataforma = plataformas[i];
-    ctx.fillRect(plataforma.x, plataforma.y, plataforma.ancho, plataforma.alto);
-  }
-}
+
 
 // Dibujar balas en el canvas
 function dibujarBalas() {
@@ -114,6 +154,8 @@ function comprobarColisiones() {
         circulos.splice(j, 1);
         // Eliminar la bala que tocó el círculo
         balas.splice(i, 1);
+
+        puntaje++;
         break;  // Salir del ciclo para evitar errores al modificar el array mientras se itera
       }
     }
@@ -169,9 +211,6 @@ class cuadrado {
     }
 
     ctx.fillRect(x, y, lado, lado);  // Dibujar el cuadrado
-
-    dibujarPlataformas();  // Dibujar las plataformas
-    plataformas.push({ x: -5, y: canvas.height - 10, ancho: canvas.width + 10, alto: 10 });
     dibujarBalas();  // Dibujar las balas
     comprobarColisiones();  // Verificar si las balas tocan los círculos
   }
@@ -315,6 +354,8 @@ function drawCircle() {
 // Función de actualización
 function actualizar() {
   ctx.clearRect(0, 0, window_width, window_height); // Limpia el canvas antes de redibujar
+  ctx.drawImage(background, 0, 0, window_width, window_height);
+  //ctx.drawImage(canvasAux, 0, 0); 
 
   // Si está volando, se mueve hacia arriba
   if (volando) {
@@ -328,11 +369,12 @@ function actualizar() {
 
   if (vidas > 0) {
     player.drawSquare();  // Dibujar el cuadrado y aplicar la gravedad y saltos
+    ctx.drawImage(canvasAux, 0, 0);
     requestAnimationFrame(actualizar);  // Continuar actualizando
   } else {
     ctx.clearRect(0, 0, window_width, window_height); // Limpia el canvas antes de redibujar
+    ctx.drawImage(background, 0, 0, window_width, window_height);
     clearInterval(intervalID);
-
     ctx.drawImage(game_over,
       (window_width / 2) - (window_width / 4) + 10, // Coordenada X centrada
       (window_height / 2) - (window_height / 4) - 50, // Coordenada Y centrada
@@ -342,7 +384,10 @@ function actualizar() {
   }
 }
 
-// Crear plataformas al inicio
 crearPlataformas();
+// Cuando todas las imágenes carguen, dibuja las plataformas
+p1.onload = p2.onload = p3.onload = dibujarPlataformas;
+
+
 drawCircles();
 actualizar();  // Iniciar el ciclo de actualización
