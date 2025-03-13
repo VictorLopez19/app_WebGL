@@ -28,14 +28,21 @@ let balas = []; // Array para almacenar las balas
 const velocidadBala = 3; // Velocidad de la bala
 const radioBala = 4; // Tamaño de la bala
 
+// Generación de valores aleatorios para el círculo en canvasRandom
+let radius = 11;
+let circulos = [];
+let noEnemigos = 1;
+
 let plataformas = []; // Array para almacenar plataformas
+
+let vidas = 5;
 
 // Crear plataformas
 function crearPlataformas() {
-  plataformas.push({ x: 100, y: canvas.height - 50, ancho: 100, alto: 10 });
-  plataformas.push({ x: 250, y: canvas.height - 100, ancho: 100, alto: 10 });
-  plataformas.push({ x: 400, y: canvas.height - 150, ancho: 100, alto: 10 });
-  plataformas.push({ x: 600, y: canvas.height - 200, ancho: 100, alto: 10 });
+  plataformas.push({ x: 60, y: canvas.height - 100, ancho: 250, alto: 10 });
+  plataformas.push({ x: 350, y: canvas.height - 150, ancho: 120, alto: 10 });
+  plataformas.push({ x: 500, y: canvas.height - 250, ancho: 200, alto: 10 });
+  plataformas.push({ x: 750, y: canvas.height - 300, ancho: 150, alto: 10 });
 }
 
 // Crear una nueva bala desde la posición del cuadrado
@@ -84,6 +91,30 @@ function dibujarBalas() {
   balas = balas.filter(bala => bala.x > 0 && bala.x < canvas.width && bala.y > 0 && bala.y < canvas.height);
 }
 
+// Comprobar si una bala toca un círculo
+function comprobarColisiones() {
+  for (let i = 0; i < balas.length; i++) {
+    let bala = balas[i];
+
+    // Iterar sobre todos los círculos
+    for (let j = 0; j < circulos.length; j++) {
+      let circle = circulos[j];
+      let dx = bala.x - circle.posX;
+      let dy = bala.y - circle.posY;
+      let distancia = Math.sqrt(dx * dx + dy * dy);
+
+      // Si la bala toca el círculo
+      if (distancia <= radioBala + circle.radius) {
+        // Eliminar el círculo
+        circulos.splice(j, 1);
+        // Eliminar la bala que tocó el círculo
+        balas.splice(i, 1);
+        break;  // Salir del ciclo para evitar errores al modificar el array mientras se itera
+      }
+    }
+  }
+}
+
 // Función para detectar si el cuadrado toca una plataforma
 function colisionConPlataformas() {
   enSuelo = false; // Resetear si está tocando el suelo en cada frame
@@ -110,7 +141,6 @@ function colisionConPlataformas() {
 
 // Ajuste en la función de dibujar y actualizar
 function dibujarCuadrado() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);  // Limpiar el canvas
   ctx.fillStyle = "blue";
 
   // Detectar colisiones con plataformas
@@ -133,6 +163,7 @@ function dibujarCuadrado() {
   dibujarPlataformas();  // Dibujar las plataformas
   plataformas.push({ x: -5, y: canvas.height - 10, ancho: canvas.width + 10, alto: 10 });
   dibujarBalas();  // Dibujar las balas
+  comprobarColisiones();  // Verificar si las balas tocan los círculos
 }
 
 document.addEventListener("keydown", function (event) {
@@ -167,11 +198,114 @@ document.addEventListener("keyup", function (event) {
   }
 });
 
-// Actualizar la animación
+
+class Circle {
+  constructor(x, y) {
+    this.cont = 0;
+    this.posX = x;
+    this.posY = y;
+    this.radius = radius;
+    this.color = "black";
+    this.speed = .7;
+    this.dx = 0.1 * this.speed;
+    this.dy = 0.1 * this.speed;
+  }
+
+  draw(context) {
+    context.beginPath();
+    context.strokeStyle = this.color;
+    context.lineWidth = 2;
+    context.arc(this.posX, this.posY, this.radius, 0, Math.PI * 2, false);
+    context.stroke();
+    context.closePath();
+  }
+  
+  update(context, squareX, squareY, squareSize, index) {
+    this.draw(context);
+  
+    // Calcular las coordenadas del centro del cuadrado
+    let squareCenterX = squareX + squareSize / 2;
+    let squareCenterY = squareY + squareSize / 2;
+  
+    // Calcular la dirección hacia el centro del cuadrado
+    let dxToSquare = squareCenterX - this.posX;
+    let dyToSquare = squareCenterY - this.posY;
+  
+    // Normalizar el vector de dirección
+    let distance = Math.sqrt(dxToSquare * dxToSquare + dyToSquare * dyToSquare);
+    if (distance > 0) {
+      // Movimiento hacia el centro del cuadrado, ajustando la velocidad
+      this.dx = (dxToSquare / distance) * this.speed;
+      this.dy = (dyToSquare / distance) * this.speed;
+    }
+  
+    // Actualizar posición
+    this.posX += this.dx;
+    this.posY += this.dy;
+  
+    // Comprobar si el círculo ha llegado al cuadrado (colisión)
+    if (
+      this.posX + this.radius > squareX && 
+      this.posX - this.radius < squareX + squareSize &&
+      this.posY + this.radius > squareY &&
+      this.posY - this.radius < squareY + squareSize
+    ) {
+      // El círculo ha alcanzado el cuadrado, puedes agregar acciones aquí
+      console.log(vidas)
+      vidas --;
+      circulos.splice(index, 1);
+    }
+  
+    // Comprobar colisión con los bordes
+    if (this.posX + this.radius > window_width || this.posX - this.radius < 0) {
+      this.dx = -this.dx;
+      this.cont++;
+    }
+    if (this.posY + this.radius > window_height || this.posY - this.radius < 0) {
+      this.dy = -this.dy;
+      this.cont++;
+    }
+  }
+}
+
+
+function drawCircles() {
+  drawCircle ();
+  let intervalID = setInterval(function() {
+      for (i = 0; i < noEnemigos; i++) {
+        drawCircle ();
+      }
+  }, 2000);
+}
+
+function drawCircle (){
+  // Elegir si el círculo aparecerá arriba o abajo
+  let randomEdge = Math.random() < 0.5 ? 'top' : 'bottom';
+
+  let randomX = Math.random() * (canvas.width - 2 * radius) + radius;
+  let randomY;
+
+  if (randomEdge === 'top') {
+    randomY = radius + 10;  // Aparece en la parte superior
+  } else {
+    randomY = canvas.height - radius * 3;  // Aparece en la parte inferior
+  }
+
+  circulos.push(new Circle(randomX, randomY));
+}
+
+// Función de actualización
 function actualizar() {
+  ctx.clearRect(0, 0, window_width, window_height); // Limpia el canvas antes de redibujar
+
   // Si está volando, se mueve hacia arriba
   if (volando) {
     velocidadY = -5;  // Mantiene al cuadrado subiendo (simula vuelo)
+  }
+
+  // Actualizar los círculos
+  for (i = 0; i < circulos.length; i++) {
+    circulos[i].update (ctx, x, y, lado, i);
   }
 
   dibujarCuadrado();  // Dibujar el cuadrado y aplicar la gravedad y saltos
@@ -180,4 +314,5 @@ function actualizar() {
 
 // Crear plataformas al inicio
 crearPlataformas();
+drawCircles();
 actualizar();  // Iniciar el ciclo de actualización
