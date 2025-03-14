@@ -5,8 +5,8 @@ const canvasAux = document.createElement('canvas');
 const ctxAux = canvasAux.getContext('2d');
 
 // Obtiene las dimensiones actuales de la ventana del navegador.
-const window_height = window.innerHeight * 0.65;
-const window_width = window.innerWidth <= 500 ? window.innerWidth * 0.9 : window.innerWidth * 0.65;
+const window_height = window.innerHeight * 0.7;
+const window_width = window.innerWidth <= 500 ? window.innerWidth * 0.9 : window.innerWidth * 0.60;
 
 // Ajusta el tamaño del canvas para que coincida con la pantalla
 canvas.height = window_height;
@@ -35,20 +35,21 @@ let volando = false;  // Variable para rastrear si el cuadrado está volando
 
 let balas = []; // Array para almacenar las balas
 const velocidadBala = 3; // Velocidad de la bala
-const radioBala = 4; // Tamaño de la bala
+const radioBala = 10; // Tamaño de la bala
 
 // Generación de valores aleatorios para el círculo en canvasRandom
-let radius = 11;
+let radius = 20;
 let circulos = [];
 let noEnemigos = 1;
 
 let plataformas = []; // Array para almacenar plataformas
 
-let vidas = 1;
+let vidas = 2;
 let puntaje = 0;
 
 let intervalID;
 
+// Cargar imágenes
 let game_over = new Image();
 game_over.src = './assets/img/game_over.png';
 
@@ -58,7 +59,12 @@ background.src = './assets/img/background.jpg';
 let plataform = new Image();
 plataform.src = './assets/img/plataform.png';
 
-// Cargar imágenes
+let enemi = new Image();
+enemi.src = './assets/img/enemi.png';
+
+let balaImg = new Image();
+balaImg.src = './assets/img/bala.jpg';
+
 const p1 = new Image();
 const p2 = new Image();
 const p3 = new Image();
@@ -127,8 +133,7 @@ function dibujarBalas() {
 
     // Dibujar la bala
     ctx.beginPath();
-    ctx.arc(bala.x, bala.y, radioBala, 0, Math.PI * 2);
-    ctx.fillStyle = "red";
+    ctx.drawImage(balaImg, bala.x - radioBala, bala.y - radioBala, radioBala * 2, radioBala * 2);
     ctx.fill();
   }
 
@@ -211,7 +216,6 @@ class cuadrado {
     }
 
     ctx.fillRect(x, y, lado, lado);  // Dibujar el cuadrado
-    dibujarBalas();  // Dibujar las balas
     comprobarColisiones();  // Verificar si las balas tocan los círculos
   }
 
@@ -269,16 +273,10 @@ class Circle {
   }
 
   draw(context) {
-    context.beginPath();
-    context.strokeStyle = this.color;
-    context.lineWidth = 2;
-    context.arc(this.posX, this.posY, this.radius, 0, Math.PI * 2, false);
-    context.stroke();
-    context.closePath();
+    context.drawImage(enemi, this.posX - this.radius, this.posY - this.radius, this.radius*2, this.radius*2);
   }
 
   update(context, squareX, squareY, squareSize, index) {
-    this.draw(context);
 
     // Calcular las coordenadas del centro del cuadrado
     let squareCenterX = squareX + squareSize / 2;
@@ -322,6 +320,18 @@ class Circle {
       this.dy = -this.dy;
       this.cont++;
     }
+
+    // Si el círculo se mueve hacia la izquierda, invertir la imagen
+    context.save(); 
+    if (this.dx > 0) {
+      context.scale(-1, 1);
+      context.translate(-this.posX * 2, 0); // Ajustar la posición al invertir
+    }
+
+    // Dibujar el círculo o imagen aquí (por ejemplo, this.draw)
+    this.draw(context);
+    context.restore(); // Restaurar el contexto original
+
   }
 }
 
@@ -370,6 +380,7 @@ function actualizar() {
   if (vidas > 0) {
     player.drawSquare();  // Dibujar el cuadrado y aplicar la gravedad y saltos
     ctx.drawImage(canvasAux, 0, 0);
+    dibujarBalas();  // Dibujar las balas
     requestAnimationFrame(actualizar);  // Continuar actualizando
   } else {
     ctx.clearRect(0, 0, window_width, window_height); // Limpia el canvas antes de redibujar
