@@ -53,6 +53,7 @@ let intervalID;
 
 let mario;
 let frames = 0;
+let liberada = true;
 
 
 // Cargar imágenes
@@ -266,8 +267,8 @@ mario = new Character("./assets/img/spritesheet.png", {
         "walk_003.png"
       ]
     },
-    idle2: {
-      name: "idle2",
+    idle: {
+      name: "idle",
       frames: ["idle_001.png", "idle_002.png", "idle_003.png"]
     },
     back: {
@@ -284,8 +285,6 @@ mario = new Character("./assets/img/spritesheet.png", {
     }
   }
 });
-
-mario.animation = "idle";
 
 class cuadrado {
   // Ajuste en la función de dibujar y actualizar
@@ -311,10 +310,9 @@ class cuadrado {
 
 let player = new cuadrado();
 
-
-
 document.addEventListener("keydown", function (event) {
   const tecla = event.key.toLowerCase();
+  liberada = false;
 
   // Movimiento a la izquierda (a)
   if (tecla === "a") {
@@ -324,15 +322,14 @@ document.addEventListener("keydown", function (event) {
   }
   // Movimiento a la derecha (d)
   else if (tecla === "d") {
-    xPlayer += velocidad;  // Mueve el cuadrado a la derecha
-
-    if (xPlayer >= canvas.width) xPlayer = -lado;  // Si pasa el borde derecho, aparece en el izquierdo
     mario.animation = "back";
+    xPlayer += velocidad;  // Mueve el cuadrado a la derecha
+    if (xPlayer >= canvas.width) xPlayer = -lado;  // Si pasa el borde derecho, aparece en el izquierdo
   }
   // Salto (w)
   if (event.key === "w" && enSuelo) {  // Solo salta si está en el suelo o sobre una plataforma
-    velocidadY = salto;  // Aplica la velocidad del salto
     mario.animation = "jump";
+    velocidadY = salto;  // Aplica la velocidad del salto
   }
 
   // Vuelo (s) - Mientras se mantenga presionada la tecla 's', el cuadrado sube
@@ -346,6 +343,8 @@ document.addEventListener("keydown", function (event) {
 });
 
 document.addEventListener("keyup", function (event) {
+  liberada = true;
+
   if (event.key === "s") {
     volando = false;  // El cuadrado deja de volar cuando se suelta la tecla
   }
@@ -372,9 +371,7 @@ class Circle {
 
     // Calcular las coordenadas del centro del cuadrado
     let squareCenterX = xPlayer + squareSize / 2;
-
     let squareCenterY = yPlayer + squareSize / 2;
-
 
     // Calcular la dirección hacia el centro del cuadrado
     let dxToSquare = squareCenterX - this.posX;
@@ -459,6 +456,7 @@ function drawCircle() {
 function actualizar() {
   ctx.clearRect(0, 0, window_width, window_height); // Limpia el canvas antes de redibujar
   ctx.drawImage(background, 0, 0, window_width, window_height);
+  frames++;
   //ctx.drawImage(canvasAux, 0, 0); 
 
   // Si está volando, se mueve hacia arriba
@@ -475,9 +473,9 @@ function actualizar() {
     player.drawSquare();  // Dibujar el cuadrado y aplicar la gravedad y saltos
     ctx.drawImage(canvasAux, 0, 0);
     dibujarBalas();  // Dibujar las balas
-
-    frames++;
-    // draw mario here
+    if (liberada){
+      mario.animation = "idle";
+    }
     mario.draw();
     requestAnimationFrame(actualizar);  // Continuar actualizando
   } else {
@@ -496,6 +494,6 @@ function actualizar() {
 crearPlataformas();
 // Cuando todas las imágenes carguen, dibuja las plataformas
 p1.onload = p2.onload = p3.onload = dibujarPlataformas;
-
 drawCircles();
 actualizar();  // Iniciar el ciclo de actualización
+
