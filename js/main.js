@@ -4,6 +4,9 @@ let ctx = canvas.getContext("2d");
 const canvasAux = document.createElement('canvas');
 const ctxAux = canvasAux.getContext('2d');
 
+const canvass = document.getElementById("canvass");
+let ctxs = canvas.getContext("2d");
+
 // Obtiene las dimensiones actuales de la ventana del navegador.
 const window_height = window.innerHeight * 0.7;
 const window_width = window.innerWidth <= 500 ? window.innerWidth * 0.9 : window.innerWidth * 0.60;
