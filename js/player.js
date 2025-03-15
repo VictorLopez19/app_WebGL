@@ -258,102 +258,8 @@ const data = {
 //const ctx = canvas.getContext("2d");
 // ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-let mario;
-let frames = 0;
 
-class Sprite {
-    constructor({ animations = [], data }) {
-        this.animations = animations;
-        this.animation = "walk";
-        this.frame = {};
-        this.frameIndex = -1;
-        this.data = data;
-    }
-
-    advance() {
-        if (frames % 12 === 0) {
-            this.frameNames = this.animations[this.animation].frames;
-
-            if (this.frameIndex + 1 >= this.frameNames.length) {
-                this.frameIndex = 0;
-            } else {
-                this.frameIndex++;
-            }
-            this.frame = this.data.frames[this.frameNames[this.frameIndex]].frame;
-        }
-    }
-}
-
-class Character extends Sprite {
-    constructor(imageURL, spriteObject, x, y, w, h) {
-        super(spriteObject);
-        this.x = x || 200;
-        this.y = y || 200;
-        this.w = w || 30;
-        this.h = h || 30;
-        this.image = new Image();
-        this.image.src = imageURL;
-    }
-
-    draw() {
-        this.advance();
-        ctx.drawImage(
-            this.image,
-            this.frame.x,
-            this.frame.y,
-            this.frame.w,
-            this.frame.h,
-            this.x,
-            this.y,
-            this.w,
-            this.h
-        );
-    }
-}
-
-//mario = new Character('./idle_walk.png')
-
-//loop
-const update = () => {
-    frames++;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // draw mario here
-    mario.draw();
-    requestAnimationFrame(update);
-};
-
-// uploading async data
-// NO USÉ FETCH PARA EL EJEMPLO EN CODEPEN ;)
-mario = new Character("./assets/img/spritesheet.png", {
-    data,
-    animations: {
-        walk: {
-            name: "walk",
-            frames: [
-                "walk_001.png",
-                "walk_002.png",
-                "walk_003.png"
-            ]
-        },
-        idle2: {
-            name: "idle2",
-            frames: ["idle_001.png", "idle_002.png", "idle_003.png"]
-        },
-        back: {
-            name: "back",
-            frames: [
-                "walk_004.png",
-                "walk_005.png",
-                "walk_006.png"
-            ]
-        },
-        jump: {
-            name: "jump",
-            frames: ["jump_001.png","jump_001.png","jump_001.png"]
-        }
-    }
-});
-update();
+//update();
 
 addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft") {
@@ -364,6 +270,8 @@ addEventListener("keydown", (e) => {
         mario.animation = "jump";
     }
 });
+
+
 addEventListener("keyup", (e) => {
     mario.animation = "idle2";
 });

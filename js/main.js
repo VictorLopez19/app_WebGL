@@ -1,11 +1,10 @@
+//import {data} from 'player.js';
+
 const canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 // Pre-dibujar las plataformas en un canvas de buffer
 const canvasAux = document.createElement('canvas');
 const ctxAux = canvasAux.getContext('2d');
-
-const canvass = document.getElementById("canvass");
-let ctxs = canvas.getContext("2d");
 
 // Obtiene las dimensiones actuales de la ventana del navegador.
 const window_height = window.innerHeight * 0.7;
@@ -23,8 +22,8 @@ canvas.style.background = "rgb(224, 224, 224)";
 canvasAux.style.background = "rgb(224, 224, 224)";
 
 const lado = 30; // Tamaño del cuadrado
-let x = (canvas.width - lado) / 2; // Centrado en X
-let y = canvas.height - lado; // Pegado abajo en Y
+let xPlayer = (canvas.width - lado) / 2; // Centrado en X
+let yPlayer = canvas.height - lado; // Pegado abajo en Y
 const velocidad = 10; // Cantidad de píxeles que se moverá en cada pulsación
 
 let enSalto = false; // Variable para evitar múltiples saltos
@@ -52,6 +51,10 @@ let puntaje = 0;
 
 let intervalID;
 
+let mario;
+let frames = 0;
+
+
 // Cargar imágenes
 let game_over = new Image();
 game_over.src = './assets/img/game_over.png';
@@ -74,6 +77,9 @@ const p3 = new Image();
 p1.src = './assets/img/p1.png';
 p2.src = './assets/img/p2.png';
 p3.src = './assets/img/p3.png';
+
+/*let idle = new Image();
+idle.src = './assets/img/idle.png';*/
 
 // Crear plataformas
 function crearPlataformas() {
@@ -113,11 +119,12 @@ canvas.addEventListener("click", function (event) {
   const mouseY = event.clientY - rect.top;
 
   const bala = {
-    x: x + lado / 2, // Centro del cuadrado
-    y: y,
+    x: xPlayer + lado / 2, // Centro del cuadrado
+    y: yPlayer,
+
     destinoX: mouseX,
     destinoY: mouseY,
-    angulo: Math.atan2(mouseY - y, mouseX - (x + lado / 2)), // Dirección del disparo
+    angulo: Math.atan2(mouseY - yPlayer, mouseX - (xPlayer + lado / 2)), // Dirección del disparo
   };
 
   balas.push(bala);
@@ -179,13 +186,14 @@ function colisionConPlataformas() {
 
     // Verifica si el cuadrado está tocando una plataforma
     if (
-      x + lado > plataforma.x &&
-      x < plataforma.x + plataforma.ancho &&
-      y + lado + velocidadY >= plataforma.y &&
-      y + lado <= plataforma.y + plataforma.alto
+      xPlayer + lado > plataforma.x &&
+      xPlayer < plataforma.x + plataforma.ancho &&
+      yPlayer + lado + velocidadY >= plataforma.y &&
+      yPlayer + lado <= plataforma.y + plataforma.alto
     ) {
+
       // Ajusta la posición del cuadrado sobre la plataforma
-      y = plataforma.y - lado;  // Coloca el cuadrado sobre la plataforma
+      yPlayer = plataforma.y - lado;  // Coloca el cuadrado sobre la plataforma
       velocidadY = 0;  // Detener el movimiento vertical
       enSuelo = true;  // El cuadrado está en el suelo o sobre una plataforma
       return true; // Se ha tocado una plataforma
@@ -194,37 +202,114 @@ function colisionConPlataformas() {
   return false; // No tocó ninguna plataforma
 }
 
-class cuadrado {
-  constructor(color) {
-    this.color = color;
+class Sprite {
+  constructor({ animations = [], data }) {
+    this.animations = animations;
+    this.animation = "walk";
+    this.frame = {};
+    this.frameIndex = -1;
+    this.data = data;
   }
 
+  advance() {
+    if (frames % 12 === 0) {
+
+      this.frameNames = this.animations[this.animation].frames;
+
+      if (this.frameIndex + 1 >= this.frameNames.length) {
+        this.frameIndex = 0;
+      } else {
+        this.frameIndex++;
+      }
+      this.frame = this.data.frames[this.frameNames[this.frameIndex]].frame;
+    }
+  }
+}
+
+class Character extends Sprite {
+  constructor(imageURL, spriteObject, x, y, w, h) {
+    super(spriteObject);
+    this.x = x || 200;
+    this.y = y || 200;
+    this.w = w || 30;
+    this.h = h || 30;
+    this.image = new Image();
+    this.image.src = imageURL;
+  }
+
+  draw() {
+    this.advance();
+    ctx.drawImage(
+      this.image,
+      this.frame.x,
+      this.frame.y,
+      this.frame.w,
+      this.frame.h,
+      xPlayer,
+      yPlayer,
+      this.w,
+      this.h
+    );
+  }
+}
+
+// uploading async data
+// NO USÉ FETCH PARA EL EJEMPLO EN CODEPEN ;)
+mario = new Character("./assets/img/spritesheet.png", {
+  data,
+  animations: {
+    walk: {
+      name: "walk",
+      frames: [
+        "walk_001.png",
+        "walk_002.png",
+        "walk_003.png"
+      ]
+    },
+    idle2: {
+      name: "idle2",
+      frames: ["idle_001.png", "idle_002.png", "idle_003.png"]
+    },
+    back: {
+      name: "back",
+      frames: [
+        "walk_004.png",
+        "walk_005.png",
+        "walk_006.png"
+      ]
+    },
+    jump: {
+      name: "jump",
+      frames: ["jump_001.png", "jump_001.png", "jump_001.png"]
+    }
+  }
+});
+
+mario.animation = "idle";
+
+class cuadrado {
   // Ajuste en la función de dibujar y actualizar
   drawSquare() {
-    ctx.fillStyle = this.color;
-
     // Detectar colisiones con plataformas
     if (!colisionConPlataformas()) {
       // Si no está tocando ninguna plataforma, aplicar gravedad
-      if (y + lado < canvas.height) {  // Evitar que se siga cayendo si ya está en el suelo
+      if (yPlayer + lado < canvas.height) {  // Evitar que se siga cayendo si ya está en el suelo
         velocidadY += gravedad;  // Aplicar gravedad
       }
     }
 
     // Actualiza la posición Y y asegura que no se mueva más allá del borde superior
-    y += velocidadY;
-    if (y < 40) { // Limita el salto para que no sobrepase el borde superior
-      y = 40;
+    yPlayer += velocidadY;
+    if (yPlayer < 40) { // Limita el salto para que no sobrepase el borde superior
+      yPlayer = 40;
       velocidadY = 0; // Detener el salto al llegar al límite superior
     }
-
-    ctx.fillRect(x, y, lado, lado);  // Dibujar el cuadrado
     comprobarColisiones();  // Verificar si las balas tocan los círculos
   }
 
 }
 
-let player = new cuadrado("purple");
+let player = new cuadrado();
 
 
 
@@ -233,17 +318,21 @@ document.addEventListener("keydown", function (event) {
 
   // Movimiento a la izquierda (a)
   if (tecla === "a") {
-    x -= velocidad;  // Mueve el cuadrado a la izquierda
-    if (x + lado <= 0) x = canvas.width;  // Si pasa el borde izquierdo, aparece en el derecho
+    xPlayer -= velocidad;  // Mueve el cuadrado a la izquierda
+    if (xPlayer + lado <= 0) xPlayer = canvas.width;  // Si pasa el borde izquierdo, aparece en el derecho
+    mario.animation = "walk";
   }
   // Movimiento a la derecha (d)
   else if (tecla === "d") {
-    x += velocidad;  // Mueve el cuadrado a la derecha
-    if (x >= canvas.width) x = -lado;  // Si pasa el borde derecho, aparece en el izquierdo
+    xPlayer += velocidad;  // Mueve el cuadrado a la derecha
+
+    if (xPlayer >= canvas.width) xPlayer = -lado;  // Si pasa el borde derecho, aparece en el izquierdo
+    mario.animation = "back";
   }
   // Salto (w)
   if (event.key === "w" && enSuelo) {  // Solo salta si está en el suelo o sobre una plataforma
     velocidadY = salto;  // Aplica la velocidad del salto
+    mario.animation = "jump";
   }
 
   // Vuelo (s) - Mientras se mantenga presionada la tecla 's', el cuadrado sube
@@ -276,14 +365,16 @@ class Circle {
   }
 
   draw(context) {
-    context.drawImage(enemi, this.posX - this.radius, this.posY - this.radius, this.radius*2, this.radius*2);
+    context.drawImage(enemi, this.posX - this.radius, this.posY - this.radius, this.radius * 2, this.radius * 2);
   }
 
   update(context, squareX, squareY, squareSize, index) {
 
     // Calcular las coordenadas del centro del cuadrado
-    let squareCenterX = squareX + squareSize / 2;
-    let squareCenterY = squareY + squareSize / 2;
+    let squareCenterX = xPlayer + squareSize / 2;
+
+    let squareCenterY = yPlayer + squareSize / 2;
+
 
     // Calcular la dirección hacia el centro del cuadrado
     let dxToSquare = squareCenterX - this.posX;
@@ -325,7 +416,7 @@ class Circle {
     }
 
     // Si el círculo se mueve hacia la izquierda, invertir la imagen
-    context.save(); 
+    context.save();
     if (this.dx > 0) {
       context.scale(-1, 1);
       context.translate(-this.posX * 2, 0); // Ajustar la posición al invertir
@@ -377,13 +468,17 @@ function actualizar() {
 
   // Actualizar los círculos
   for (i = 0; i < circulos.length; i++) {
-    circulos[i].update(ctx, x, y, lado, i);
+    circulos[i].update(ctx, xPlayer, yPlayer, lado, i);
   }
 
   if (vidas > 0) {
     player.drawSquare();  // Dibujar el cuadrado y aplicar la gravedad y saltos
     ctx.drawImage(canvasAux, 0, 0);
     dibujarBalas();  // Dibujar las balas
+
+    frames++;
+    // draw mario here
+    mario.draw();
     requestAnimationFrame(actualizar);  // Continuar actualizando
   } else {
     ctx.clearRect(0, 0, window_width, window_height); // Limpia el canvas antes de redibujar
@@ -401,7 +496,6 @@ function actualizar() {
 crearPlataformas();
 // Cuando todas las imágenes carguen, dibuja las plataformas
 p1.onload = p2.onload = p3.onload = dibujarPlataformas;
-
 
 drawCircles();
 actualizar();  // Iniciar el ciclo de actualización
