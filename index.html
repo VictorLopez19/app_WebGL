@@ -8,20 +8,117 @@
     <!-- Enlace al archivo de estilos de Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/style.css">
 
-    <title>POO con Canvas</title>
+    <!-- Font Awesome para los iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="shortcut icon" href="./assets/img/icon.png" type="image/x-icon">
+
+    <title>Pixel War</title>
 </head>
 
 <body class="d-flex flex-column justify-content-between" style="height: 100vh">
 
+    <nav class="navbar navbar-dark bg-dark mr-4 py-3">
+        <a class="navbar-brand text-white ms-2" href="#">
+            <img src="./assets/img/icon.png" width="30" height="30" class="d-inline-block align-top" alt="">
+            Pixel War
+        </a>
+        <div class="ml-auto me-2">
+            <!-- Botón Información -->
+            <button class="btn btn-info me-3 botones" data-bs-toggle="modal" data-bs-target="#modalInfo">
+                <i class="fas fa-info-circle me-2"></i> Información
+            </button>
+
+            <!-- Botón Puntajes más altos -->
+            <button class="btn btn-warning botones" data-bs-toggle="modal" data-bs-target="#modalPuntajes">
+                <i class="fas fa-trophy me-2"></i> Puntajes más altos
+            </button>
+        </div>
+    </nav>
+
+    <!-- Modal Información -->
+    <div class="modal fade" id="modalInfo" tabindex="-1" aria-labelledby="modalInfoLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalInfoLabel">Información</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Aquí va la información detallada que deseas mostrar.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Puntajes Más Altos -->
+    <div class="modal fade" id="modalPuntajes" tabindex="-1" aria-labelledby="modalPuntajesLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalPuntajesLabel">Puntajes más altos</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Aquí aparecerán los puntajes más altos.
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Elemento canvas donde se dibujarán los círculos animados -->
     <div class="d-flex justify-content-center mt-5">
-        <canvas id="canvas" class="border border-dark"></canvas>
+
+        <div class="content">
+            <div id="encabezado" class="d-flex justify-content-between flex-row">
+
+                <div id="stats" class="d-flex flex-row">
+                    <div class="col-auto d-flex align-items-center ms-2 item">
+                        <img src="./assets/img/vidas.jpg" alt="" width="20">
+                        <span id="no_vidas" class="text-center ms-1"> x5</span>
+                    </div>
+
+                    <div class="col-auto d-flex align-items-center ms-2 item ">
+                        <img src="./assets/img/enemi.png" alt="" width="25">
+                        <span id="total_puntaje" class="text-center ms-1"> x0</span>
+                    </div>
+
+                    <div class="col-auto d-flex align-items-center ms-2 item">
+                        <img src="./assets/img/bala.jpg" alt="" width="25">
+                        <span id="no_balas" class="text-center ms-1"> x0</span>
+                    </div>
+
+                    <div class="col-auto d-flex align-items-center ms-2 item">
+                        <span id="nivel" class="text-center ms-1"> Nivel 1</span>
+                    </div>
+
+                </div>
+
+                <div class="text-center me-2">
+                    <div class="pixel-icon button" id="playPauseBtn" style="outline: none; box-shadow: none;">
+                        <i class="fas fa-play" id="playPauseIcon"></i>
+                    </div>
+                </div>
+
+            </div>
+            <canvas id="canvas"></canvas>
+        </div>
     </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-2 mt-5">
+        <p class="pt-3">&copy; 2025. Todos los derechos reservados | Victor López</p>
+    </footer>
 
     <!-- Enlace al archivo JavaScript que contiene la lógica del canvas -->
     <script src="./js/player.js"></script>
     <script src="./js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 </body>
 
 </html>

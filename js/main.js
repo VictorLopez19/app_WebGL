@@ -1,10 +1,18 @@
-//import {data} from 'player.js';
-
 const canvas = document.getElementById("canvas");
 let ctx = canvas.getContext("2d");
 // Pre-dibujar las plataformas en un canvas de buffer
 const canvasAux = document.createElement('canvas');
 const ctxAux = canvasAux.getContext('2d');
+
+const encabezado = document.getElementById('encabezado');
+
+const no_vidas = document.getElementById('no_vidas');
+const total_puntaje = document.getElementById('total_puntaje');
+const num_balas = document.getElementById('no_balas');
+const text_nivel = document.getElementById('nivel');
+
+const playPauseBtn = document.getElementById("playPauseBtn");
+const playPauseIcon = document.getElementById("playPauseIcon");
 
 // Obtiene las dimensiones actuales de la ventana del navegador.
 const window_height = window.innerHeight * 0.7;
@@ -13,6 +21,9 @@ const window_width = window.innerWidth <= 500 ? window.innerWidth * 0.9 : window
 // Ajusta el tamaño del canvas para que coincida con la pantalla
 canvas.height = window_height;
 canvas.width = window_width;
+
+encabezado.style.width = window_width + 'px';
+encabezado.style.height = '40px';
 
 // Actualizar el tamaño del buffer canvas a lo necesario
 canvasAux.width = window_width
@@ -38,6 +49,7 @@ let volando = false;  // Variable para rastrear si el cuadrado está volando
 let balas = []; // Array para almacenar las balas
 const velocidadBala = 3; // Velocidad de la bala
 const radioBala = 10; // Tamaño de la bala
+let no_balas = 10;
 
 // Generación de valores aleatorios para el círculo en canvasRandom
 let radius = 20;
@@ -46,15 +58,20 @@ let noEnemigos = 1;
 
 let plataformas = []; // Array para almacenar plataformas
 
-let vidas = 2;
+let vidas = 3;
 let puntaje = 0;
+let nivel = 1;
 
 let intervalID;
+let intervalIDBalas;
 
 let mario;
 let frames = 0;
 let liberada = true;
 
+let isPlaying = false;
+let isPaused = false;
+let animationId;
 
 // Cargar imágenes
 let game_over = new Image();
@@ -72,6 +89,9 @@ enemi.src = './assets/img/enemi.png';
 let balaImg = new Image();
 balaImg.src = './assets/img/bala.jpg';
 
+let paused = new Image();
+paused.src = './assets/img/paused.png';
+
 const p1 = new Image();
 const p2 = new Image();
 const p3 = new Image();
@@ -79,15 +99,70 @@ p1.src = './assets/img/p1.png';
 p2.src = './assets/img/p2.png';
 p3.src = './assets/img/p3.png';
 
-/*let idle = new Image();
-idle.src = './assets/img/idle.png';*/
+// Cargar puntajes desde localStorage
+function cargarPuntajes() {
+  const puntajes = JSON.parse(localStorage.getItem('highScores'));
+  return puntajes || []; // Si no hay puntajes, devuelve un array vacío
+}
+
+// Guardar puntajes en localStorage
+function guardarPuntajes(puntajes) {
+  localStorage.setItem('highScores', JSON.stringify(puntajes));
+}
+
+// Agregar nuevo puntaje si es récord y evitar duplicados
+function agregarPuntaje(nombre, puntaje) {
+  let puntajes = cargarPuntajes(); // Cargar puntajes actuales desde localStorage
+
+  // Verificar si el puntaje ya existe para el mismo nombre
+  const existePuntaje = puntajes.find(p => p.nombre === nombre);
+
+  if (existePuntaje) {
+    // Si el puntaje existente es mayor que el nuevo, no hacemos nada
+    if (existePuntaje.puntaje >= puntaje) {
+      console.log(`${nombre} ya tiene un puntaje mayor o igual.`);
+      return;
+    }
+    // Si el puntaje existente es menor, lo actualizamos
+    existePuntaje.puntaje = puntaje;
+  } else {
+    // Si no existe, agregamos un nuevo puntaje
+    puntajes.push({ nombre, puntaje });
+  }
+
+  // Ordenar los puntajes de mayor a menor
+  puntajes.sort((a, b) => b.puntaje - a.puntaje);
+
+  // Mantener solo los 5 más altos
+  puntajes = puntajes.slice(0, 5);
+
+  // Guardar en el localStorage
+  guardarPuntajes(puntajes);
+
+  console.log('Puntajes actualizados:', puntajes);
+}
+
+// Mostrar los puntajes en consola
+function mostrarPuntajes() {
+  const puntajes = cargarPuntajes(); // Cargar puntajes actuales desde localStorage
+
+  if (puntajes.length === 0) {
+    console.log('No hay puntajes guardados.');
+  } else {
+    console.log('Puntajes actuales:');
+    puntajes.forEach(p => {
+      console.log(`${p.nombre}: ${p.puntaje}`);
+    });
+  }
+}
 
 // Crear plataformas
 function crearPlataformas() {
-  plataformas.push({ x: 60, y: canvas.height - 100, ancho: 252, alto: 18 });
-  plataformas.push({ x: 350, y: canvas.height - 150, ancho: 126, alto: 18 });
-  plataformas.push({ x: 500, y: canvas.height - 250, ancho: 198, alto: 18 });
-  plataformas.push({ x: 750, y: canvas.height - 300, ancho: 144, alto: 18 });
+  plataformas.push({ x: canvas.width / 4, y: canvas.height - 120, ancho: multiplos(canvas.width/4*2), alto: 18 });
+  plataformas.push({ x: canvas.width / 12, y: canvas.height - 230, ancho: multiplos(canvas.width/4), alto: 18 });
+  plataformas.push({ x: canvas.width / 12*8, y: canvas.height - 230, ancho: multiplos(canvas.width/4), alto: 18 });
+  plataformas.push({ x: canvas.width / 4, y: canvas.height - 340, ancho: multiplos(canvas.width/4*2), alto: 18 });
+  plataformas.push({ x: canvas.width / 8 * 3, y: canvas.height - 450, ancho: multiplos(canvas.width/4), alto: 18 });
   plataformas.push({ x: -5, y: canvas.height - 10, ancho: canvas.width + 10, alto: 10 });
 }
 
@@ -95,9 +170,6 @@ function dibujarPlataformas() {
   for (let i = 0; i < plataformas.length; i++) {
     const plataforma = plataformas[i];
     let anchoTotal = 0; // Reiniciar el anchoTotal para cada plataforma
-
-    console.log("Entro")
-
     // Dibuja la imagen de la orilla izquierda (p1)
     ctxAux.drawImage(p1, plataforma.x + anchoTotal, plataforma.y, p1.width, p1.height);
     anchoTotal += p1.width;
@@ -111,6 +183,13 @@ function dibujarPlataformas() {
     // Dibuja la imagen de la orilla derecha (p3)
     ctxAux.drawImage(p3, plataforma.x + anchoTotal, plataforma.y, p3.width, p3.height);
   }
+}
+
+function multiplos(num) {
+  const abajo = Math.floor(num / 18) * 18;
+  const arriba = Math.ceil(num / 18) * 18;
+  
+  return (num - abajo) <= (arriba - num) ? abajo : arriba;
 }
 
 // Crear una nueva bala desde la posición del cuadrado
@@ -128,10 +207,15 @@ canvas.addEventListener("click", function (event) {
     angulo: Math.atan2(mouseY - yPlayer, mouseX - (xPlayer + lado / 2)), // Dirección del disparo
   };
 
-  balas.push(bala);
+  if (no_balas > 0) {
+    if(!isPaused){
+      balas.push(bala);
+      no_balas--;
+    }
+  }
+
+  num_balas.innerHTML = " x" + no_balas;
 });
-
-
 
 // Dibujar balas en el canvas
 function dibujarBalas() {
@@ -152,6 +236,17 @@ function dibujarBalas() {
   balas = balas.filter(bala => bala.x > 0 && bala.x < canvas.width && bala.y > 0 && bala.y < canvas.height);
 }
 
+function controlBalas() {
+  intervalIDBalas = setInterval(function () {
+    if (no_balas < 10) {
+      if (!isPaused) {
+        no_balas++;
+      }
+    }
+    num_balas.innerHTML = " x" + no_balas;
+  }, 1500);
+}
+
 // Comprobar si una bala toca un círculo
 function comprobarColisiones() {
   for (let i = 0; i < balas.length; i++) {
@@ -170,8 +265,18 @@ function comprobarColisiones() {
         circulos.splice(j, 1);
         // Eliminar la bala que tocó el círculo
         balas.splice(i, 1);
-
         puntaje++;
+
+        if (puntaje % 10 == 0 && puntaje > 0) {
+          nivel++;
+
+          if (puntaje % 30 == 0) {
+            noEnemigos++;
+          }
+        }
+
+        total_puntaje.innerHTML = " x" + puntaje;
+        text_nivel.innerHTML = " Nivel " + nivel;
         break;  // Salir del ciclo para evitar errores al modificar el array mientras se itera
       }
     }
@@ -286,9 +391,9 @@ mario = new Character("./assets/img/spritesheet.png", {
   }
 });
 
-class cuadrado {
+class Player {
   // Ajuste en la función de dibujar y actualizar
-  drawSquare() {
+  drawPlayer() {
     // Detectar colisiones con plataformas
     if (!colisionConPlataformas()) {
       // Si no está tocando ninguna plataforma, aplicar gravedad
@@ -308,7 +413,7 @@ class cuadrado {
 
 }
 
-let player = new cuadrado();
+let player = new Player();
 
 document.addEventListener("keydown", function (event) {
   const tecla = event.key.toLowerCase();
@@ -332,26 +437,17 @@ document.addEventListener("keydown", function (event) {
     velocidadY = salto;  // Aplica la velocidad del salto
   }
 
-  // Vuelo (s) - Mientras se mantenga presionada la tecla 's', el cuadrado sube
-  if (event.key === "s") {
-    volando = true;  // El cuadrado empieza a volar
-  }
-
   if (vidas > 0) {
-    player.drawSquare();
+    player.drawPlayer();
   }
 });
 
 document.addEventListener("keyup", function (event) {
   liberada = true;
-
-  if (event.key === "s") {
-    volando = false;  // El cuadrado deja de volar cuando se suelta la tecla
-  }
 });
 
 
-class Circle {
+class Enemi {
   constructor(x, y) {
     this.cont = 0;
     this.posX = x;
@@ -397,8 +493,8 @@ class Circle {
       this.posY - this.radius < squareY + squareSize
     ) {
       // El círculo ha alcanzado el cuadrado, puedes agregar acciones aquí
-      console.log(vidas)
       vidas--;
+      no_vidas.innerHTML = " x" + vidas;
       circulos.splice(index, 1);
     }
 
@@ -427,16 +523,18 @@ class Circle {
 }
 
 
-function drawCircles() {
-  drawCircle();
+function drawEnemies() {
+  drawEnemi();
   intervalID = setInterval(function () {
     for (i = 0; i < noEnemigos; i++) {
-      drawCircle();
+      if (!isPaused) {
+        drawEnemi();
+      }
     }
   }, 2000);
 }
 
-function drawCircle() {
+function drawEnemi() {
   // Elegir si el círculo aparecerá arriba o abajo
   let randomEdge = Math.random() < 0.5 ? 'top' : 'bottom';
 
@@ -449,7 +547,7 @@ function drawCircle() {
     randomY = canvas.height - radius * 3;  // Aparece en la parte inferior
   }
 
-  circulos.push(new Circle(randomX, randomY));
+  circulos.push(new Enemi(randomX, randomY));
 }
 
 // Función de actualización
@@ -470,30 +568,134 @@ function actualizar() {
   }
 
   if (vidas > 0) {
-    player.drawSquare();  // Dibujar el cuadrado y aplicar la gravedad y saltos
+    player.drawPlayer();  // Dibujar el cuadrado y aplicar la gravedad y saltos
     ctx.drawImage(canvasAux, 0, 0);
     dibujarBalas();  // Dibujar las balas
-    if (liberada){
+    if (liberada) {
       mario.animation = "idle";
     }
     mario.draw();
-    requestAnimationFrame(actualizar);  // Continuar actualizando
-  } else {
+
+    if (!isPaused) {
+      animationId = requestAnimationFrame(actualizar);
+    }else{
+      ctx.drawImage(paused,
+        (window_width / 2) - (window_width / 4) + 10, // Coordenada X centrada
+        (window_height / 2) - (window_height / 4), // Coordenada Y centrada
+        window_width / 2  - 20,
+        window_height / 4 + 100
+      );
+    }
+  }
+  else {
     ctx.clearRect(0, 0, window_width, window_height); // Limpia el canvas antes de redibujar
     ctx.drawImage(background, 0, 0, window_width, window_height);
     clearInterval(intervalID);
+    clearInterval(intervalIDBalas);
+    cancelAnimationFrame(animationId);
     ctx.drawImage(game_over,
       (window_width / 2) - (window_width / 4) + 10, // Coordenada X centrada
       (window_height / 2) - (window_height / 4) - 50, // Coordenada Y centrada
       window_width / 2 - 20,
       window_height / 2 + 100
     );
+
+    isPlaying = false;
+
+    playPauseIcon.classList.remove("fa-pause");
+    playPauseIcon.classList.add("fa-play");
   }
 }
 
-crearPlataformas();
-// Cuando todas las imágenes carguen, dibuja las plataformas
-p1.onload = p2.onload = p3.onload = dibujarPlataformas;
-drawCircles();
-actualizar();  // Iniciar el ciclo de actualización
+function reiniciarJuego() {
+  // Restablecer posiciones del jugador y plataformas
+  xPlayer = (canvas.width - lado) / 2;
+  yPlayer = canvas.height - lado;
+  velocidadY = 0;
 
+  // Restablecer variables de salto y estado
+  enSalto = false;
+  enSuelo = false;
+  volando = false;
+  isPause = false;
+  isPlaying = false;
+
+  // Restablecer las balas
+  balas = [];
+  no_balas = 10;
+
+  // Restablecer puntaje, nivel y vidas
+  puntaje = 0;
+  nivel = 1;
+  vidas = 3;
+
+  // Restablecer enemigos
+  circulos = [];
+  noEnemigos = 1;
+
+  // Restablecer plataformas
+  plataformas = [];
+  crearPlataformas();
+
+  // Restablecer estado de la imagen del personaje
+  mario.animation = "idle";
+  frames = 0;
+
+  playPauseIcon.classList.remove("fa-pause");
+  playPauseIcon.classList.add("fa-play");
+
+  // Redibujar todo desde cero
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  dibujarPlataformas();
+  total_puntaje.innerHTML = " x" + puntaje;
+  text_nivel.innerHTML = " Nivel " + nivel;
+  num_balas.innerHTML = " x" + no_balas;
+}
+
+// Añadir un evento de clic al botón
+playPauseBtn.addEventListener("click", function () {
+  // Verificar si el ícono actual es de "play"
+  if (playPauseIcon.classList.contains("fa-play")) {
+    // Cambiar el ícono a "pausa"
+
+    if (!isPlaying && !isPaused) {
+      reiniciarJuego();
+      no_vidas.innerHTML = " x" + vidas;
+      num_balas.innerHTML = " x" + no_balas;
+      crearPlataformas();
+      // Cuando todas las imágenes carguen, dibuja las plataformas
+      p1.onload = p2.onload = p3.onload = dibujarPlataformas;
+      drawEnemies();
+      controlBalas();
+      actualizar();  // Iniciar el ciclo de actualización
+      isPlaying = true;
+    } else {
+      isPaused = false;
+      animationId = requestAnimationFrame(actualizar);
+    }
+
+    playPauseIcon.classList.remove("fa-play");
+    playPauseIcon.classList.add("fa-pause");
+
+  } else {
+    // Cambiar el ícono a "play"
+    isPaused = true;
+    playPauseIcon.classList.remove("fa-pause");
+    playPauseIcon.classList.add("fa-play");
+  }
+});
+
+window.onload = function () {
+  crearPlataformas();
+  dibujarPlataformas();
+  ctx.clearRect(0, 0, window_width, window_height); // Limpiar el lienzo
+  ctx.drawImage(background, 0, 0, window_width, window_height); // Dibujar el fondo
+  ctx.drawImage(canvasAux, 0, 0);
+
+  // Llamar a la función que muestra los puntajes al cargar la página
+  mostrarPuntajes();
+
+  // Ejemplo: Agregar puntajes de ejemplo para probar
+  // Ejemplo: Agregar puntajes de ejemplo para probar
+  //localStorage.removeItem('highScores')
+};
