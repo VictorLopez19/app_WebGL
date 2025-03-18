@@ -873,9 +873,4 @@ window.onload = function () {
   mostrarPuntajes();
 
   actualizarVisibilidadBotones();
-
-  // Ejemplo: Agregar puntajes de ejemplo para probar
-  // Ejemplo: Agregar puntajes de ejemplo para probar
-  //localStorage.removeItem('highScores')
-  //agregarPuntaje('Octavio', 100);
 };
