@@ -14,8 +14,6 @@ body {
     font-family: 'VT323','DotGothic16', sans-serif;
     font-size: 25px;
     color: #fff;
-
-    cursor: url('../assets/img/cursor.png');
 }
 
 canvas {
@@ -42,6 +40,15 @@ canvas {
     font-size: 14px;
 }
 
-body {
-    cursor: url('../assets/img/cursor.png'), auto; /* General cursor style for the body */
+#informacion{
+    font-size: 13px;
+    text-align: justify;
+}
+
+* {
+    cursor: url('../assets/img/cursor.png'), auto !important; /* General cursor style for the body */
+}
+
+button{
+    cursor: url('../assets/img/cursor.png'), pointer !important; /* Specific cursor style for the button */
 }

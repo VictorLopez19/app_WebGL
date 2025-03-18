@@ -61,26 +61,49 @@
                     <h5 class="modal-title" id="modalInfoLabel">Información</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <h5>Objetivo del juego:</h5>
-                    <p>El objetivo del juego es evitar que los enemigos te toquen mientras recolectas círculos de
-                        colores. Usa el cuadrado como jugador, que puede moverse con las teclas de flecha y saltar con
-                        la barra espaciadora.</p>
+                <div class="modal-body" id="informacion">
+                    <p>El objetivo del juego es evitar que BOO te toque. Para hacerlo, tienes caparazones azules que te
+                        ayudarán, pero no son infinitos, así que úsalos con cuidado. También puedes usar las plataformas
+                        para alejarte de BOO y ponerte a salvo.</p>
 
-                    <h5>Controles:</h5>
+                    <h6>Controles:</h6>
                     <ul>
-                        <li><strong>Movimiento:</strong> Usa las flechas izquierda y derecha para mover el cuadrado.
+                        <li class="mb-1"><strong>Movimiento:</strong> Hay dos formas de moverse en el juego. La primera
+                            es usando el
+                            teclado, con las teclas
+                            <span class="badge rounded-pill bg-dark">A</span> ,
+                            <span class="badge rounded-pill bg-dark">D</span> y
+                            <span class="badge rounded-pill bg-dark">W</span>
+                            para moverte hacia la izquierda, derecha y arriba, respectivamente. La segunda opción es a
+                            través de botones, ideal para dispositivos sin teclado.
                         </li>
-                        <li><strong>Salto:</strong> Presiona la barra espaciadora para hacer saltar el cuadrado.</li>
-                        <li><strong>Disparo:</strong> Haz clic en el área de juego para disparar balas hacia los
-                            círculos.</li>
+                        <li><strong>Disparo:</strong> Para poder derrotar a BOO, debes apuntar hacia la dirección en la
+                            que se encuentra
+                            y hacer clic. Así lanzarás un caparazón que lo afectará.
+                        </li>
                     </ul>
 
-                    <h5>Reglas:</h5>
+                    <h6>Reglas:</h6>
                     <ul>
-                        <li>Recoge los círculos para ganar puntos.</li>
-                        <li>Evita que los enemigos toquen el cuadrado.</li>
-                        <li>Cuanto más rápido elimines enemigos, mayor será tu nivel.</li>
+                        <li>Tienes un total de 3 vidas, ¡así que protégelas bien!</li>
+                        <li>Los caparazones no son infinitos, pero cada
+                            <span class="badge rounded-pill bg-dark">1.5 segundos</span>
+                            recibirás uno nuevo, ¡úsalos
+                            sabiamente!
+                        </li>
+                        <li>Solo puedes tener hasta 10 caparazones a la vez, no se acumulan más de esa cantidad.</li>
+                        <li>BOO puede atravesar las plataformas, pero no te preocupes, los caparazones están diseñados
+                            para hacer lo mismo y detenerlo.</li>
+                        <li>Cuanto más rápido elimines a BOO, más alto será tu nivel.</li>
+                        <li>Para comenzar a jugar, simplemente haz clic en el botón ubicado en la esquina superior
+                            derecha de la pantalla. Además, podrás pausarlo en cualquier momento durante el juego.</li>
+                    </ul>
+
+                    <h6>Sugerencias:</h6>
+                    <ul>
+                        <li>Para una mejor experiencia, te recomendamos jugar en una laptop o PC.</li>
+                        <li>Intenta eliminar la mayor cantidad de enemigos posible, ya que los resultados se registran.
+                            ¡No querrás quedar fuera del top, verdad?</li>
                     </ul>
                 </div>
             </div>
@@ -133,7 +156,7 @@
                 <div id="stats" class="d-flex flex-row">
                     <div class="col-auto d-flex align-items-center ms-sm-2 ms-1 item">
                         <img src="./assets/img/vidas.jpg" alt="" width="20">
-                        <span id="no_vidas" class="text-center ms-sm-1 ms-0"> x5</span>
+                        <span id="no_vidas" class="text-center ms-sm-1 ms-0"> x3</span>
                     </div>
 
                     <div class="col-auto d-flex align-items-center ms-sm-2 ms-1 item ">

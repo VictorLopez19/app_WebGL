@@ -109,6 +109,23 @@ p1.src = './assets/img/p1.png';
 p2.src = './assets/img/p2.png';
 p3.src = './assets/img/p3.png';
 
+/* SONIDOS */
+let music = new Audio('./assets/sounds/music.mp3'); // Musica del juego
+let lanzar = new Audio('./assets/sounds/lanzar.mp3');
+let ouch = new Audio('./assets/sounds/ouch.mp3');
+
+function reproducirMusic() {
+  music.volume = 0.4; // Ajusta el volumen antes de reproducirlo
+
+  music.loop = true; // Hace que el sonido se repita
+  music.play();
+}
+
+function detenerMusic() {
+  ouch.pause(); // Pausa el sonido
+  ouch.currentTime = 0; // Reinicia el tiempo del sonido a 0 para empezar de nuevo si se reproduce después
+}
+
 // Cargar puntajes desde localStorage
 function cargarPuntajes() {
   const puntajes = JSON.parse(localStorage.getItem('highScores'));
@@ -267,6 +284,9 @@ canvas.addEventListener("click", function (event) {
     if (!isPaused) {
       balas.push(bala);
       no_balas--;
+
+      lanzar.currentTime = 0;  // Reinicia el sonido si no se está reproduciendo
+      lanzar.play();
     }
   }
 
@@ -504,9 +524,9 @@ document.addEventListener("keyup", function (event) {
 
 function actualizarVisibilidadBotones() {
   if (window.innerWidth <= 500) {
-      botones.classList.remove('d-none');  // Muestra los botones
+    botones.classList.remove('d-none');  // Muestra los botones
   } else {
-      botones.classList.add('d-none');  // Oculta los botones
+    botones.classList.add('d-none');  // Oculta los botones
   }
 }
 
@@ -516,28 +536,28 @@ window.addEventListener('resize', actualizarVisibilidadBotones);
 // Función para comenzar el movimiento con un intervalo controlado
 function iniciarMovimiento() {
   if (!intervaloMovimiento) {
-      intervaloMovimiento = setInterval(() => {
-          if (presionandoIzquierda) {
-              xPlayer -= velocidad;
-              if (xPlayer + lado <= 0) xPlayer = canvas.width;
-              mario.animation = "walk";
-          }
+    intervaloMovimiento = setInterval(() => {
+      if (presionandoIzquierda) {
+        xPlayer -= velocidad;
+        if (xPlayer + lado <= 0) xPlayer = canvas.width;
+        mario.animation = "walk";
+      }
 
-          if (presionandoDerecha) {
-              xPlayer += velocidad;
-              if (xPlayer >= canvas.width) xPlayer = -lado;
-              mario.animation = "back";
-          }
+      if (presionandoDerecha) {
+        xPlayer += velocidad;
+        if (xPlayer >= canvas.width) xPlayer = -lado;
+        mario.animation = "back";
+      }
 
-          if (presionandoSaltar && enSuelo) {
-              mario.animation = "jump";
-              velocidadY = salto;
-          }
+      if (presionandoSaltar && enSuelo) {
+        mario.animation = "jump";
+        velocidadY = salto;
+      }
 
-          if (vidas > 0) {
-              player.drawPlayer();
-          }
-      }, 40); // Controla la velocidad del movimiento (100 ms por paso)
+      if (vidas > 0) {
+        player.drawPlayer();
+      }
+    }, 40); // Controla la velocidad del movimiento (100 ms por paso)
   }
 }
 
@@ -650,6 +670,9 @@ class Enemi {
       vidas--;
       no_vidas.innerHTML = " x" + vidas;
       circulos.splice(index, 1);
+
+      ouch.currentTime = 0;  // Reinicia el sonido si no se está reproduciendo
+      ouch.play();
     }
 
     // Comprobar colisión con los bordes
@@ -789,6 +812,7 @@ function reiniciarJuego() {
   plataformas = [];
   crearPlataformas();
   iniciarMovimiento();
+  reproducirMusic();
 
   // Restablecer estado de la imagen del personaje
   mario.animation = "idle";
