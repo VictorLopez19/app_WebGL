@@ -14,6 +14,12 @@ const text_nivel = document.getElementById('nivel');
 const playPauseBtn = document.getElementById("playPauseBtn");
 const playPauseIcon = document.getElementById("playPauseIcon");
 
+const btnIzquierda = document.getElementById("btnIzquierda");
+const btnDerecha = document.getElementById("btnDerecha");
+const btnSaltar = document.getElementById("btnSaltar");
+
+const botones = document.getElementById('controles');
+
 // Obtiene las dimensiones actuales de la ventana del navegador.
 const window_height = window.innerHeight * 0.7;
 const window_width = window.innerWidth <= 500 ? window.innerWidth * 0.9 : window.innerWidth * 0.60;
@@ -44,7 +50,6 @@ const tiempoSalto = 1000; // Duración del salto en milisegundos
 let velocidadY = 0; // Velocidad vertical del cuadrado
 const gravedad = 0.8; // Gravedad que afecta el salto
 const salto = -15; // Fuerza del salto
-let volando = false;  // Variable para rastrear si el cuadrado está volando
 
 let balas = []; // Array para almacenar las balas
 const velocidadBala = 3; // Velocidad de la bala
@@ -64,6 +69,7 @@ let nivel = 1;
 
 let intervalID;
 let intervalIDBalas;
+let intervaloMovimiento;
 
 let mario;
 let frames = 0;
@@ -72,6 +78,10 @@ let liberada = true;
 let isPlaying = false;
 let isPaused = false;
 let animationId;
+
+let presionandoIzquierda = false;
+let presionandoDerecha = false;
+let presionandoSaltar = false;
 
 // Cargar imágenes
 let game_over = new Image();
@@ -142,27 +152,73 @@ function agregarPuntaje(nombre, puntaje) {
   console.log('Puntajes actualizados:', puntajes);
 }
 
-// Mostrar los puntajes en consola
+function esPuntajeAlto(puntaje) {
+  const puntajes = cargarPuntajes(); // Cargar los puntajes actuales
+
+  // Si hay menos de 5 puntajes, automáticamente entra
+  if (puntajes.length < 5) {
+    return true;
+  }
+
+  // Obtener el puntaje más bajo en la lista actual
+  const puntajeMasBajo = puntajes[puntajes.length - 1].puntaje;
+
+  // Si el nuevo puntaje es mayor que el más bajo, entra en el top 5
+  return puntaje > puntajeMasBajo;
+}
+
+// Función para mostrar los puntajes en el modal
 function mostrarPuntajes() {
   const puntajes = cargarPuntajes(); // Cargar puntajes actuales desde localStorage
+  const modalBody = document.getElementById('modalPuntajesBody'); // Obtener el cuerpo del modal
 
   if (puntajes.length === 0) {
-    console.log('No hay puntajes guardados.');
+    modalBody.innerHTML = '<p class="text-center">No hay puntajes guardados.</p>'; // Mostrar mensaje si no hay puntajes
   } else {
-    console.log('Puntajes actuales:');
+    let html = '<div class="list-group">';
     puntajes.forEach(p => {
-      console.log(`${p.nombre}: ${p.puntaje}`);
+      html += `
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+          <strong>${p.nombre}</strong>
+          <span class="badge bg-primary rounded-pill">${p.puntaje}</span>
+        </div>
+      `; // Agregar cada puntaje a la lista con estilo
     });
+    html += '</div>';
+    modalBody.innerHTML = html; // Insertar los puntajes en el modal
   }
+}
+
+// Función para mostrar el modal cuando el puntaje entra en el Top 5
+function mostrarModalRegistro() {
+  const modal = document.getElementById('modalRegistroPuntaje');
+  const bootstrapModal = new bootstrap.Modal(modal);
+  bootstrapModal.show();
+}
+
+// Función para guardar el puntaje ingresado
+function guardarNuevoPuntaje() {
+  const nombre = document.getElementById('nombreJugador').value.trim();
+
+  if (nombre === '') {
+    alert('Por favor, ingresa tu nombre.');
+    return;
+  }
+
+  agregarPuntaje(nombre, puntaje); // Guardar el puntaje en localStorage
+
+  // Cerrar el modal
+  const modal = document.getElementById('modalRegistroPuntaje');
+  const bootstrapModal = bootstrap.Modal.getInstance(modal);
+  bootstrapModal.hide();
 }
 
 // Crear plataformas
 function crearPlataformas() {
-  plataformas.push({ x: canvas.width / 4, y: canvas.height - 120, ancho: multiplos(canvas.width/4*2), alto: 18 });
-  plataformas.push({ x: canvas.width / 12, y: canvas.height - 230, ancho: multiplos(canvas.width/4), alto: 18 });
-  plataformas.push({ x: canvas.width / 12*8, y: canvas.height - 230, ancho: multiplos(canvas.width/4), alto: 18 });
-  plataformas.push({ x: canvas.width / 4, y: canvas.height - 340, ancho: multiplos(canvas.width/4*2), alto: 18 });
-  plataformas.push({ x: canvas.width / 8 * 3, y: canvas.height - 450, ancho: multiplos(canvas.width/4), alto: 18 });
+  plataformas.push({ x: canvas.width / 4, y: canvas.height - 120, ancho: multiplos(canvas.width / 4 * 2), alto: 18 });
+  plataformas.push({ x: canvas.width / 12, y: canvas.height - 230, ancho: multiplos(canvas.width / 4), alto: 18 });
+  plataformas.push({ x: canvas.width / 12 * 8, y: canvas.height - 230, ancho: multiplos(canvas.width / 4), alto: 18 });
+  plataformas.push({ x: canvas.width / 4, y: canvas.height - 340, ancho: multiplos(canvas.width / 4 * 2), alto: 18 });
   plataformas.push({ x: -5, y: canvas.height - 10, ancho: canvas.width + 10, alto: 10 });
 }
 
@@ -188,7 +244,7 @@ function dibujarPlataformas() {
 function multiplos(num) {
   const abajo = Math.floor(num / 18) * 18;
   const arriba = Math.ceil(num / 18) * 18;
-  
+
   return (num - abajo) <= (arriba - num) ? abajo : arriba;
 }
 
@@ -208,7 +264,7 @@ canvas.addEventListener("click", function (event) {
   };
 
   if (no_balas > 0) {
-    if(!isPaused){
+    if (!isPaused) {
       balas.push(bala);
       no_balas--;
     }
@@ -446,6 +502,104 @@ document.addEventListener("keyup", function (event) {
   liberada = true;
 });
 
+function actualizarVisibilidadBotones() {
+  if (window.innerWidth <= 500) {
+      botones.classList.remove('d-none');  // Muestra los botones
+  } else {
+      botones.classList.add('d-none');  // Oculta los botones
+  }
+}
+
+// Ejecutar cuando la ventana cambie de tamaño
+window.addEventListener('resize', actualizarVisibilidadBotones);
+
+// Función para comenzar el movimiento con un intervalo controlado
+function iniciarMovimiento() {
+  if (!intervaloMovimiento) {
+      intervaloMovimiento = setInterval(() => {
+          if (presionandoIzquierda) {
+              xPlayer -= velocidad;
+              if (xPlayer + lado <= 0) xPlayer = canvas.width;
+              mario.animation = "walk";
+          }
+
+          if (presionandoDerecha) {
+              xPlayer += velocidad;
+              if (xPlayer >= canvas.width) xPlayer = -lado;
+              mario.animation = "back";
+          }
+
+          if (presionandoSaltar && enSuelo) {
+              mario.animation = "jump";
+              velocidadY = salto;
+          }
+
+          if (vidas > 0) {
+              player.drawPlayer();
+          }
+      }, 40); // Controla la velocidad del movimiento (100 ms por paso)
+  }
+}
+
+// Función para detener el movimiento
+function detenerMovimiento() {
+  clearInterval(intervaloMovimiento);
+  intervaloMovimiento = null;
+}
+
+// Eventos para botón Izquierda
+btnIzquierda.addEventListener('mousedown', function () {
+  presionandoIzquierda = true;
+  liberada = false;
+});
+btnIzquierda.addEventListener('mouseup', function () {
+  presionandoIzquierda = false;
+  liberada = true;
+});
+btnIzquierda.addEventListener('touchstart', function () {
+  presionandoIzquierda = true;
+  liberada = false;
+});
+btnIzquierda.addEventListener('touchend', function () {
+  presionandoIzquierda = false;
+  liberada = true;
+});
+
+// Eventos para botón Derecha
+btnDerecha.addEventListener('mousedown', function () {
+  presionandoDerecha = true;
+  liberada = false;
+});
+btnDerecha.addEventListener('mouseup', function () {
+  presionandoDerecha = false;
+  liberada = true;
+});
+btnDerecha.addEventListener('touchstart', function () {
+  presionandoDerecha = true;
+  liberada = false;
+});
+btnDerecha.addEventListener('touchend', function () {
+  presionandoDerecha = false;
+  liberada = true;
+});
+
+// Eventos para botón Saltar
+btnSaltar.addEventListener('mousedown', function () {
+  presionandoSaltar = true;
+  liberada = false;
+});
+btnSaltar.addEventListener('mouseup', function () {
+  presionandoSaltar = false;
+  liberada = true;
+});
+btnSaltar.addEventListener('touchstart', function () {
+  presionandoSaltar = true;
+  liberada = false;
+});
+btnSaltar.addEventListener('touchend', function () {
+  presionandoSaltar = false;
+  liberada = true;
+});
 
 class Enemi {
   constructor(x, y) {
@@ -555,12 +709,6 @@ function actualizar() {
   ctx.clearRect(0, 0, window_width, window_height); // Limpia el canvas antes de redibujar
   ctx.drawImage(background, 0, 0, window_width, window_height);
   frames++;
-  //ctx.drawImage(canvasAux, 0, 0); 
-
-  // Si está volando, se mueve hacia arriba
-  if (volando) {
-    velocidadY = -5;  // Mantiene al cuadrado subiendo (simula vuelo)
-  }
 
   // Actualizar los círculos
   for (i = 0; i < circulos.length; i++) {
@@ -578,11 +726,11 @@ function actualizar() {
 
     if (!isPaused) {
       animationId = requestAnimationFrame(actualizar);
-    }else{
+    } else {
       ctx.drawImage(paused,
         (window_width / 2) - (window_width / 4) + 10, // Coordenada X centrada
         (window_height / 2) - (window_height / 4), // Coordenada Y centrada
-        window_width / 2  - 20,
+        window_width / 2 - 20,
         window_height / 4 + 100
       );
     }
@@ -600,6 +748,11 @@ function actualizar() {
       window_height / 2 + 100
     );
 
+    if (esPuntajeAlto(puntaje)) {
+      mostrarModalRegistro();
+    }
+
+    detenerMovimiento();
     isPlaying = false;
 
     playPauseIcon.classList.remove("fa-pause");
@@ -616,8 +769,7 @@ function reiniciarJuego() {
   // Restablecer variables de salto y estado
   enSalto = false;
   enSuelo = false;
-  volando = false;
-  isPause = false;
+  isPaused = false;
   isPlaying = false;
 
   // Restablecer las balas
@@ -636,6 +788,7 @@ function reiniciarJuego() {
   // Restablecer plataformas
   plataformas = [];
   crearPlataformas();
+  iniciarMovimiento();
 
   // Restablecer estado de la imagen del personaje
   mario.animation = "idle";
@@ -695,7 +848,10 @@ window.onload = function () {
   // Llamar a la función que muestra los puntajes al cargar la página
   mostrarPuntajes();
 
+  actualizarVisibilidadBotones();
+
   // Ejemplo: Agregar puntajes de ejemplo para probar
   // Ejemplo: Agregar puntajes de ejemplo para probar
   //localStorage.removeItem('highScores')
+  //agregarPuntaje('Octavio', 100);
 };

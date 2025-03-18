@@ -38,8 +38,8 @@ canvas {
     margin: 0 30px 0 0;
 }
 
-.botones{
-    font-size: 15px;
+.botones, .control{
+    font-size: 14px;
 }
 
 body {

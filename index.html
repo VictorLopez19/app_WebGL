@@ -22,21 +22,34 @@
 
 <body class="d-flex flex-column justify-content-between" style="height: 100vh">
 
-    <nav class="navbar navbar-dark bg-dark mr-4 py-3">
-        <a class="navbar-brand text-white ms-2" href="#">
-            <img src="./assets/img/icon.png" width="30" height="30" class="d-inline-block align-top" alt="">
-            Pixel War
-        </a>
-        <div class="ml-auto me-2">
-            <!-- Botón Información -->
-            <button class="btn btn-info me-3 botones" data-bs-toggle="modal" data-bs-target="#modalInfo">
-                <i class="fas fa-info-circle me-2"></i> Información
+    <nav class="navbar navbar-dark bg-dark navbar-expand-lg py-3">
+        <div class="container-fluid">
+            <a class="navbar-brand text-white ms-2" href="#">
+                <img src="./assets/img/icon.png" width="30" height="30" class="d-inline-block align-top" alt="">
+                Pixel War
+            </a>
+
+            <!-- Botón de colapso para pantallas pequeñas -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
             </button>
 
-            <!-- Botón Puntajes más altos -->
-            <button class="btn btn-warning botones" data-bs-toggle="modal" data-bs-target="#modalPuntajes">
-                <i class="fas fa-trophy me-2"></i> Puntajes más altos
-            </button>
+            <!-- Contenedor de elementos del menú -->
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <div class="ms-auto d-flex flex-column flex-lg-row align-items-lg-center">
+                    <!-- Botón Información -->
+                    <button class="btn btn-info mt-3 mt-lg-0 mb-2 mb-lg-0 me-lg-3 botones" data-bs-toggle="modal"
+                        data-bs-target="#modalInfo">
+                        <i class="fas fa-info-circle me-2"></i> Información
+                    </button>
+
+                    <!-- Botón Puntajes más altos -->
+                    <button class="btn btn-warning botones" data-bs-toggle="modal" data-bs-target="#modalPuntajes">
+                        <i class="fas fa-trophy me-2"></i> Puntajes más altos
+                    </button>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -49,7 +62,26 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    Aquí va la información detallada que deseas mostrar.
+                    <h5>Objetivo del juego:</h5>
+                    <p>El objetivo del juego es evitar que los enemigos te toquen mientras recolectas círculos de
+                        colores. Usa el cuadrado como jugador, que puede moverse con las teclas de flecha y saltar con
+                        la barra espaciadora.</p>
+
+                    <h5>Controles:</h5>
+                    <ul>
+                        <li><strong>Movimiento:</strong> Usa las flechas izquierda y derecha para mover el cuadrado.
+                        </li>
+                        <li><strong>Salto:</strong> Presiona la barra espaciadora para hacer saltar el cuadrado.</li>
+                        <li><strong>Disparo:</strong> Haz clic en el área de juego para disparar balas hacia los
+                            círculos.</li>
+                    </ul>
+
+                    <h5>Reglas:</h5>
+                    <ul>
+                        <li>Recoge los círculos para ganar puntos.</li>
+                        <li>Evita que los enemigos toquen el cuadrado.</li>
+                        <li>Cuanto más rápido elimines enemigos, mayor será tu nivel.</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -63,12 +95,34 @@
                     <h5 class="modal-title" id="modalPuntajesLabel">Puntajes más altos</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    Aquí aparecerán los puntajes más altos.
+                <div class="modal-body" id="modalPuntajesBody">
+                    <!-- Los puntajes serán insertados aquí -->
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal para registrar el puntaje -->
+    <div class="modal fade" id="modalRegistroPuntaje" tabindex="-1" aria-labelledby="modalRegistroPuntajeLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalRegistroPuntajeLabel">¡Felicidades!</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>Has logrado uno de los 5 mejores puntajes. Ingresa tu nombre para guardarlo.</p>
+                    <input type="text" id="nombreJugador" class="form-control text-center mt-2" placeholder="Tu nombre"
+                        maxlength="10">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="guardarNuevoPuntaje()">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <!-- Elemento canvas donde se dibujarán los círculos animados -->
     <div class="d-flex justify-content-center mt-5">
@@ -77,23 +131,23 @@
             <div id="encabezado" class="d-flex justify-content-between flex-row">
 
                 <div id="stats" class="d-flex flex-row">
-                    <div class="col-auto d-flex align-items-center ms-2 item">
+                    <div class="col-auto d-flex align-items-center ms-sm-2 ms-1 item">
                         <img src="./assets/img/vidas.jpg" alt="" width="20">
-                        <span id="no_vidas" class="text-center ms-1"> x5</span>
+                        <span id="no_vidas" class="text-center ms-sm-1 ms-0"> x5</span>
                     </div>
 
-                    <div class="col-auto d-flex align-items-center ms-2 item ">
+                    <div class="col-auto d-flex align-items-center ms-sm-2 ms-1 item ">
                         <img src="./assets/img/enemi.png" alt="" width="25">
-                        <span id="total_puntaje" class="text-center ms-1"> x0</span>
+                        <span id="total_puntaje" class="text-center ms-sm-1 ms-0"> x0</span>
                     </div>
 
-                    <div class="col-auto d-flex align-items-center ms-2 item">
+                    <div class="col-auto d-flex align-items-center ms-sm-2 ms-1 item">
                         <img src="./assets/img/bala.jpg" alt="" width="25">
-                        <span id="no_balas" class="text-center ms-1"> x0</span>
+                        <span id="no_balas" class="text-center ms-sm-1 ms-0"> x0</span>
                     </div>
 
-                    <div class="col-auto d-flex align-items-center ms-2 item">
-                        <span id="nivel" class="text-center ms-1"> Nivel 1</span>
+                    <div class="col-auto d-flex align-items-center ms-sm-2 ms-1 item">
+                        <span id="nivel" class="text-center ms-sm-1 ms-0"> Nivel 1</span>
                     </div>
 
                 </div>
@@ -109,15 +163,32 @@
         </div>
     </div>
 
+    <div id="controles" class="d-flex justify-content-center mt-4">
+        <!-- Botón Izquierda -->
+        <button class="btn btn-primary control" id="btnIzquierda">
+            <i class="fas fa-arrow-left me-2"></i> Izquierda
+        </button>
+
+        <!-- Botón Saltar -->
+        <button class="btn btn-primary me-3 ms-3 control" id="btnSaltar">
+            <i class="fas fa-arrow-up me-2"></i> Saltar
+        </button>
+
+        <!-- Botón Derecha -->
+        <button class="btn btn-primary control" id="btnDerecha">
+            <i class="fas fa-arrow-right me-2"></i> Derecha
+        </button>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-dark text-white text-center py-2 mt-5">
         <p class="pt-3">&copy; 2025. Todos los derechos reservados | Victor López</p>
     </footer>
 
     <!-- Enlace al archivo JavaScript que contiene la lógica del canvas -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="./js/player.js"></script>
     <script src="./js/main.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
 </body>
 
